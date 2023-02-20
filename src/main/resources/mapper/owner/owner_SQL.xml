@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="owner">
+
+	<!-- 사장님 아이디로 사장님네 수면카페의 예약현황 조회 -->
+	<select id="selectCafeReservList" parameterType="hashmap"
+		resultType="hashmap">
+		<include refid="common.pagingPre"/> 
+		SELECT 
+				ROWNUM RNUM, A.*
+		FROM (  
+				SELECT * 
+        		FROM 
+        				RESERV
+        		WHERE 
+        				C_IDX = ( 
+        						SELECT 
+        								CAFE_IDX
+                				FROM 
+                						CAFEINFO
+                				WHERE 
+                						CAFE_OWN_ID = #{m_id})
+        		ORDER BY 
+        				R_DATE DESC, 
+        				R_POSSIBLETIME DESC) A 
+		ORDER BY 
+				RNUM DESC
+		<include refid="common.pagingPost"/> 
+	</select>
+
+	<!-- 사장님의 예약관리 -->
+	<update id="updateStatus" parameterType="hashmap">
+		UPDATE 
+				RESERV
+		SET 
+				R_STATUS = #{R_STATUS}
+		<if test="R_STATUS == 3 and R_PAYMETHOD == 0"> <!-- 무통장입금 회원으로부터 돈을 받았다면 결제날짜 삽입 -->
+		  		, R_PAYDATE = sysdate
+		</if>
+		WHERE 
+				R_IDX = #{R_IDX}
+	</update>
+	
+	<select id="checkStatus" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+				R_STATUS 
+		FROM 
+				RESERV 
+		WHERE 
+				R_IDX = #{R_IDX}
+	</select>
+	
+	<!-- 사장님의 이번달 정산관리 -->
+	<select id="selectCafeProfit" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+		SELECT 
+				SUM(R_PRICE) TOTAL 
+		FROM 
+				RESERV 
+		WHERE 
+				C_IDX = (
+						SELECT 
+								CAFE_IDX FROM CAFEINFO 
+						WHERE 
+								CAFE_OWN_ID = #{m_id}
+						)
+		AND 
+				R_STATUS IN (2,3,4) 
+		AND 
+				TO_CHAR(R_PAYDATE, 'YYMM') = TO_CHAR(sysdate, 'YYMM') 
+		]]>
+	</select>
+
+	<!-- 이번달 환불 금액 -->
+	<select id="selectCafeRefund" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+		SELECT 
+				SUM(R_PRICE) REFUND 
+		FROM 
+				RESERV 
+		WHERE 
+				C_IDX = (
+						SELECT 
+								CAFE_IDX FROM CAFEINFO 
+						WHERE 
+								CAFE_OWN_ID = #{m_id}
+						)
+		AND 
+				TO_CHAR(R_PAYDATE, 'YYMM') = TO_CHAR(sysdate, 'YYMM')
+		AND 
+				R_STATUS = 0 
+		AND 
+				R_PAYDATE IS NOT NULL 
+		]]>
+	</select>
+	
+	<select id="selectCProfitDetail" parameterType="hashmap" resultType="hashmap">
+	SELECT 
+			* 
+	FROM 
+			RESERV 
+	WHERE 
+			C_IDX = (
+						SELECT 
+								CAFE_IDX FROM CAFEINFO 
+						WHERE 
+								CAFE_OWN_ID = #{m_id}
+						)
+	AND 
+			(R_STATUS IN (2,3,4) OR (R_STATUS = 0 AND R_PAYDATE IS NOT NULL)) 
+	AND 
+			TO_CHAR(R_PAYDATE, 'YYMM') = TO_CHAR(sysdate, 'YYMM')
+	</select>
+
+</mapper>

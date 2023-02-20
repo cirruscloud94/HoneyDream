@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="reserv">
+
+	<!-- 시간선택 -->
+	<select id="selectReservTime" parameterType="hashmap" resultType="hashmap" >
+	<![CDATA[
+	
+	SELECT 
+			*
+	FROM 
+			SCHE
+	WHERE
+			SCHE_GOOD_IDX = ${sche_good_idx}
+	AND
+			SCHE_DATE = ${sche_date}
+	
+	]]>
+	</select>
+	
+	
+	<!-- 옵션선택 값 -->
+	<select id="selectOption" parameterType="hashmap" resultType="hashmap">
+	<![CDATA[
+	SELECT
+			*
+	FROM
+			OWNER_GOODSREG
+	WHERE 
+			GOODSREG_IDX = ${goodsReg_Idx}
+	]]>
+	</select>  
+	
+</mapper>

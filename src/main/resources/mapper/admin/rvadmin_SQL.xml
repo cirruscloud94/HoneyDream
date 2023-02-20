@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="rvadmin">
+<!-- 리뷰 리스트 -->
+	<select id="reviewList" parameterType="hashmap" resultType="hashmap">
+		<include refid="common.pagingPre"/> 
+		<![CDATA[
+		SELECT 
+				ROW_NUMBER() OVER(ORDER BY v_idx DESC) RNUM,
+				R.R_IDX, 
+				V.V_O_IDX, 
+				R.R_CAFE_NAME, 
+				R.R_ROOM_NAME, 
+				R.R_ID, 
+				V.V_STAR, 
+				V.V_C_IDX, 
+				V.V_REG_DATE, 
+				V.V_CONTENTS, 
+				V.V_IDX,
+				V.V_DEL_GB,
+				V.V_WRITER,
+				V.V_MOD_DATE
+		FROM 
+				REVIEW V INNER JOIN RESERV R
+		ON 
+				R.R_IDX = V.V_R_IDX
+		WHERE 
+				V.V_DEL_GB = 'N'
+		]]>
+		<if test="keyword != null">
+			<choose>
+				<when test="searchType == 'I'.toString()">
+					AND (V_WRITER LIKE '%' || #{keyword} || '%')
+				</when>
+				<when test="searchType == 'C'.toString()">
+					AND (V_C_IDX LIKE '%' || #{keyword} || '%')
+				</when>
+				<otherwise>
+					AND ((V_WRITER LIKE '%' || #{keyword} || '%') 
+					OR (V_C_IDX LIKE '%' || #{keyword} || '%'))
+				</otherwise>
+			</choose>
+		</if>
+		<include refid="common.pagingPost"/>
+	</select>
+	
+<!-- 리뷰 상세정보 -->
+	<select id="selectReviewDetail" resultType="hashmap">
+	<![CDATA[
+		select 
+				R.R_IDX,
+				V.V_O_IDX, 
+				R.R_CAFE_NAME, 
+				R.R_ROOM_NAME,
+				R.R_ID, 
+				V.V_STAR,
+				V.V_C_IDX,
+				V.V_REG_DATE,
+				V.V_CONTENTS,
+				V.V_IDX,
+				V.V_WRITER
+		from 
+				REVIEW V INNER JOIN RESERV R
+		on 
+				R.R_IDX = V.V_R_IDX
+		where 
+				V.V_IDX = #{v_idx}
+	]]>
+	</select>
+
+<!-- 리뷰 삭제 -->
+ 	<update id="deleteReview" parameterType="hashmap" >
+   		 <![CDATA[
+    	UPDATE 
+    			REVIEW
+		SET 
+				V_DEL_GB = 'Y'
+		WHERE 
+				V_IDX = #{v_idx}
+         ]]>
+	</update>
+	
+</mapper>
